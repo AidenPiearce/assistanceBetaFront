@@ -1,0 +1,157 @@
+body {
+  background-color: white;
+}
+
+
+.app-container {
+  width: 100%;
+  max-width: 600px;
+  height: 100dvh;
+  margin: 0 auto;
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+
+.chat-container::-webkit-scrollbar {
+  display: none;
+}
+
+
+
+.welcome-message {
+  color: grey;
+  text-align: center;
+  font-size: 16px;
+  padding: 0 10px;
+}
+
+.chat-container {
+  flex-grow: 1;
+  min-height: 0;
+  margin-top: 15px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 5px 0;
+}
+
+.chat-message-user {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.chat-message-robot {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.chat-messages-text {
+  background-color: rgb(218, 218, 218);
+  border-radius: 12px;
+  padding: 14px;
+  margin: 0 5px;
+  max-width: 75%;
+  font-size: 16px;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+.chat-message-profile {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.chat-input-container {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+input {
+  border-radius: 10px;
+  border: 1px solid #777;
+  padding: 12px;
+  font-size: 16px;
+  min-height: 48px;
+  flex-grow: 1;
+  min-width: 0;
+  outline: none;
+}
+
+input:focus {
+  border-color: darkcyan;
+}
+
+button {
+  background-color: darkcyan;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  min-height: 48px;
+}
+
+
+/* Phone */
+@media (orientation: portrait) and (max-width: 768px) {
+
+  .app-container {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    padding: 0 8px;
+  }
+
+  button {
+    padding: 14px 18px;
+    min-height: 50px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  input {
+    min-height: 50px;
+    padding: 13px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .chat-input-container {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .chat-container {
+    margin-top: 10px;
+    padding-bottom: 5px;
+  }
+
+  .chat-message-profile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chat-messages-text {
+    max-width: 78%;
+    padding: 13px;
+    font-size: 16px;
+    line-height: 1.45;
+    border-radius: 12px;
+  }
+
+  .welcome-message {
+    font-size: 16px;
+  }
+}

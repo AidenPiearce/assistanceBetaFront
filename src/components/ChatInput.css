@@ -1,0 +1,100 @@
+.chat-input-container {
+  display: flex;
+  width: 100%;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+input {
+  border-radius: 10px;
+  border: 1px solid #777;
+  padding: 12px;
+  font-size: 16px;
+  min-height: 48px;
+  flex-grow: 1;
+  min-width: 0;
+  outline: none;
+}
+
+input:focus {
+  border-color: darkcyan;
+}
+
+button {
+  background-color: darkcyan;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  min-height: 48px;
+}
+
+.clearButton {
+  background-color: grey;
+}
+
+.offline-notice {
+  background-color: #b8860b;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-left: 8px;
+  align-self: center;
+  white-space: nowrap;
+}
+
+/* Phone */
+@media (orientation: portrait) and (max-width: 768px) {
+
+  .app-container {
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    padding: 0 8px;
+  }
+
+  button {
+    padding: 14px 18px;
+    min-height: 50px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  input {
+    min-height: 50px;
+    padding: 13px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .chat-input-container {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .chat-container {
+    margin-top: 10px;
+    padding-bottom: 5px;
+  }
+
+  .chat-message-profile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .chat-messages-text {
+    max-width: 78%;
+    padding: 13px;
+    font-size: 16px;
+    line-height: 1.45;
+    border-radius: 12px;
+  }
+
+  .welcome-message {
+    font-size: 16px;
+  }
+}
