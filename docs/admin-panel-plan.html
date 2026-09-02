@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سند برنامه‌ریزی: پنل ادمین، آمار مصرف و Rate Limiting — دستیار FPGA</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --card: #ffffff;
+    --ink: #1e2433;
+    --muted: #5b6577;
+    --accent: #2458c9;
+    --accent-dark: #163a86;
+    --line: #dde3ee;
+    --warn-bg: #fff6e0;
+    --warn-border: #e5a812;
+    --danger-bg: #fdecec;
+    --danger-border: #d64545;
+    --tip-bg: #e9f8ef;
+    --tip-border: #2f9e63;
+    --code-bg: #10182b;
+    --code-ink: #dbe4ff;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Vazirmatn", "Segoe UI", Tahoma, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.95;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 80px; }
+  header.hero {
+    background: linear-gradient(135deg, var(--accent-dark), var(--accent));
+    color: #fff;
+    border-radius: 18px;
+    padding: 34px 34px 28px;
+    margin-bottom: 28px;
+  }
+  header.hero h1 { margin: 0 0 10px; font-size: 26px; line-height: 1.6; }
+  header.hero p { margin: 4px 0; opacity: .92; font-size: 14.5px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .meta span {
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 3px 14px; border-radius: 99px; font-size: 13px;
+  }
+  nav.toc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 26px; margin-bottom: 30px;
+  }
+  nav.toc h2 { margin: 0 0 12px; font-size: 17px; color: var(--accent-dark); }
+  nav.toc ol { margin: 0; padding-inline-start: 22px; columns: 2; column-gap: 40px; }
+  nav.toc li { margin: 4px 0; break-inside: avoid; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); }
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 26px 30px;
+    margin-bottom: 26px;
+  }
+  h2.sec {
+    font-size: 21px; margin: 0 0 18px; padding-inline-start: 14px;
+    border-inline-start: 5px solid var(--accent);
+    color: var(--accent-dark);
+  }
+  h3 { font-size: 17px; margin: 26px 0 10px; color: var(--accent-dark); }
+  p { margin: 10px 0; }
+  ul, ol { margin: 8px 0; padding-inline-start: 24px; }
+  li { margin: 5px 0; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px;
+    background: #fff;
+  }
+  th {
+    background: var(--accent-dark); color: #fff; padding: 10px 12px;
+    text-align: right; font-weight: 600; white-space: nowrap;
+  }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafd; }
+  code {
+    direction: ltr; unicode-bidi: embed;
+    background: #eceffb; color: #1d2a55;
+    padding: 1px 7px; border-radius: 6px;
+    font-family: Consolas, "Courier New", monospace; font-size: 13.5px;
+  }
+  pre {
+    direction: ltr; text-align: left;
+    background: var(--code-bg); color: var(--code-ink);
+    padding: 16px 18px; border-radius: 12px;
+    overflow-x: auto; line-height: 1.6;
+    font-family: Consolas, "Courier New", monospace; font-size: 13.5px;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  .box { border-radius: 12px; padding: 14px 18px; margin: 14px 0; border-inline-start: 5px solid; }
+  .box.warn  { background: var(--warn-bg);  border-color: var(--warn-border); }
+  .box.danger{ background: var(--danger-bg);border-color: var(--danger-border); }
+  .box.tip   { background: var(--tip-bg);   border-color: var(--tip-border); }
+  .box b:first-child { display: block; margin-bottom: 4px; }
+  .diagram {
+    background: var(--code-bg); color: var(--code-ink);
+    direction: ltr; text-align: center;
+    border-radius: 12px; padding: 18px 10px;
+    overflow-x: auto;
+    font-family: Consolas, monospace; font-size: 13px; line-height: 1.55;
+    white-space: pre;
+  }
+  .pill {
+    display: inline-block; padding: 1px 12px; border-radius: 99px;
+    font-size: 12.5px; font-weight: 700; white-space: nowrap;
+  }
+  .p-high { background: #fdecec; color: #b02a2a; }
+  .p-med  { background: #fff3d6; color: #8a6400; }
+  .p-low  { background: #e9f8ef; color: #20714a; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 40px; }
+  @media (max-width: 720px) {
+    nav.toc ol { columns: 1; }
+    section.card { padding: 20px 18px; }
+  }
+  @media print {
+    body { background: #fff; }
+    section.card, nav.toc { border: none; padding: 10px 0; page-break-inside: avoid; }
+    header.hero { border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <h1>سند برنامه‌ریزی فنی<br>پنل ادمین، ثبت آمار مصرف و محدودسازی نرخ درخواست (Rate Limiting)</h1>
+  <p>دستیار هوشمند درس FPGA/VHDL — فرانت‌اند React + سرور MCP</p>
+  <div class="meta">
+    <span>نسخه: 1.0</span>
+    <span>تاریخ: مرداد ۱۴۰۵ (اوت ۲۰۲۶)</span>
+    <span>وضعیت: پیش‌نویس برای تأیید</span>
+    <span>مقیاس هدف: حدود ۱۰۰۰ کاربر در روز</span>
+    <span>استقرار: سرور اختصاصی شرکت (بدون سرویس عمومی)</span>
+  </div>
+</header>
+
+<nav class="toc">
+  <h2>فهرست مطالب</h2>
+  <ol>
+    <li><a href="#sec1">خلاصه اجرایی</a></li>
+    <li><a href="#sec2">بررسی وضعیت فعلی کد</a></li>
+    <li><a href="#sec3">چرا همه‌چیز باید سمت سرور باشد؟</a></li>
+    <li><a href="#sec4">مشکل امنیتی فعلی که باید حل شود</a></li>
+    <li><a href="#sec5">معماری هدف</a></li>
+    <li><a href="#sec6">جزئیات پیاده‌سازی در بک‌اند</a></li>
+    <li><a href="#sec7">طرح دیتابیس</a></li>
+    <li><a href="#sec8">سیاست Rate Limiting</a></li>
+    <li><a href="#sec9">پنل ادمین</a></li>
+    <li><a href="#sec10">زیرساخت استقرار روی سرور شرکت</a></li>
+    <li><a href="#sec11">نقشه راه اجرا (فازبندی)</a></li>
+    <li><a href="#sec12">مسیر یادگیری: چه چیزهایی را از الان شروع کنم؟</a></li>
+    <li><a href="#sec13">تصمیمات باز</a></li>
+  </ol>
+</nav>
+
+<!-- ================================================================ -->
+<section class="card" id="sec1">
+  <h2 class="sec">۱. خلاصه اجرایی</h2>
+  <p>
+    این سند پاسخ می‌دهد به این سؤال که «پنل ادمین برای مشاهده آمار درخواست‌ها، مصرف توکن هر Session و هر IP، و اعمال Rate Limit» باید کجا ساخته شود؛
+    سپس معماری هدف، طرح دیتابیس، سیاست محدودسازی، زیرساخت استقرار روی سرور شرکت و در پایان «مسیر یادگیری» ابزارها و مفاهیم لازم را مشخص می‌کند.
+  </p>
+  <table>
+    <tr><th>تصمیم</th><th>انتخاب</th><th>توضیح یک‌خطی</th></tr>
+    <tr><td>محل پنل ادمین و آمار</td><td><b>سمت Backend (سرور MCP)</b></td><td>تنها نقطه‌ای که قابل دورزدن نیست و داده واقعی دارد.</td></tr>
+    <tr><td>دیتابیس لاگ‌ها</td><td>PostgreSQL</td><td>استاندارد صنعت؛ برای گزارش‌های تجمیعی عالی است.</td></tr>
+    <tr><td>شمارنده‌های Rate Limit</td><td>Redis</td><td>سریع، با انقضای خودکار (TTL)؛ مناسب شمارش پنجره‌ای.</td></tr>
+    <tr><td>پنل ادمین UI</td><td>اپ React کوچک جداگانه پشت مسیر <code>/admin</code></td><td>جدا از اپ دانشجویان، با لاگین مستقل.</td></tr>
+    <tr><td>استقرار</td><td>Docker Compose روی سرور شرکت + Nginx</td><td>تکرارپذیر، قابل بکاپ‌گیری، بدون وابستگی به Railway.</td></tr>
+    <tr><td>ریپو / گیت عمومی</td><td>هیچ‌کدام</td><td>پروژه داخلی شرکت؛ کد و کلیدها فقط روی سرور شرکت.</td></tr>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec2">
+  <h2 class="sec">۲. بررسی وضعیت فعلی کد</h2>
+  <p>این بخش بر اساس خواندن مستقیم کد واقعی دو پروژه نوشته شده است:</p>
+  <ul>
+    <li><b>فرانت‌اند:</b> React + Vite — فایل <code>src/mcp-client.js</code> مستقیماً از مرورگر به سرور MCP وصل می‌شود (اندپوینت‌های <code>/mcp</code> و <code>/ask</code>).</li>
+    <li><b>بک‌اند:</b> پایتون (Starlette + FastMCP) — فایل <code>src/fpga_mcp/server.py</code> با سه بخش اصلی:
+      <ul>
+        <li>ابزارهای MCP (<code>search_notes</code>، <code>lookup_page</code>، <code>list_documents</code>، <code>reindex</code>)</li>
+        <li>اندپوینت <code>/ask</code>: حلقه گفتگو با LLM (سازگار با OpenAI؛ Gemini از طریق <code>OPENAI_BASE_URL</code>) همراه با Tool-Calling و retry روی خطاهای موقت</li>
+        <li>Middleware توکن Bearer و CORS</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>نکاتی که در کد فعلی پیدا شد و در این طرح لحاظ شده:</h3>
+  <table>
+    <tr><th>#</th><th>یافته</th><th>محل در کد</th><th>پیامد</th></tr>
+    <tr>
+      <td>۱</td>
+      <td>توکن احراز هویت داخل باندل مرورگر قرار می‌گیرد (<code>VITE_MCP_AUTH_TOKEN</code>)</td>
+      <td><code>mcp-client.js</code> خطوط 37 و 194</td>
+      <td><span class="pill p-high">بحرانی</span> هر کسی با DevTools توکن را برمی‌دارد.</td>
+    </tr>
+    <tr>
+      <td>۲</td>
+      <td>Session های وب فقط در حافظهٔ پروسه نگهداری می‌شوند (<code>_web_sessions</code>)</td>
+      <td><code>server.py</code> خط 202</td>
+      <td>با ری‌استارت سرور همه تاریخچه‌ها می‌پرد؛ آماری از آن‌ها ثبت نمی‌شود؛ با بیش از یک worker هم سازگار نیست.</td>
+    </tr>
+    <tr>
+      <td>۳</td>
+      <td>هیچ ثبت‌آمی از IP، تعداد درخواست و مصرف توکن وجود ندارد</td>
+      <td>—</td>
+      <td>پایه‌ی پنل ادمین باید از صفر ساخته شود.</td>
+    </tr>
+    <tr>
+      <td>۴</td>
+      <td>پاسخ LLM شامل فیلد <code>usage</code> (تعداد توکن‌ها) است ولی نادیده گرفته می‌شود</td>
+      <td><code>server.py</code> تابع <code>_llm_chat</code> خط 255</td>
+      <td>نقطهٔ طلایی برای ثبت مصرف توکن — داده همین حالا موجود است!</td>
+    </tr>
+    <tr>
+      <td>۵</td>
+      <td>CORS و Host های مجاز هاردکد شده‌اند (دامنه GitHub Pages)</td>
+      <td><code>server.py</code> خطوط 419–468</td>
+      <td>هنگام انتقال به سرور شرکت باید به دامنه داخلی شرکت تغییر کند.</td>
+    </tr>
+    <tr>
+      <td>۶</td>
+      <td>سرور MCP در حالت <code>stateless=True</code> اجرا می‌شود؛ شناسه جلسهٔ وب از بدنهٔ درخواست (<code>session_id</code>) می‌آید نه از هدر MCP</td>
+      <td><code>server.py</code> خط 440 و 284</td>
+      <td>خوب است! کلید آماریِ ما همان <code>session_id</code> ارسالی از مرورگر است.</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec3">
+  <h2 class="sec">۳. چرا همه‌چیز باید سمت سرور باشد؟</h2>
+  <ol>
+    <li>
+      <b>مرورگر قابل اعتماد نیست.</b> اگر Rate Limit را در فرانت‌اند چک کنید، کاربر می‌تواند اصلاً اپ شما را باز نکند و مستقیم با curl به اندپوینت‌ها حمله کند.
+      تنها جایی که «همهٔ» درخواست‌ها از آن عبور می‌کنند، سرور است.
+    </li>
+    <li>
+      <b>IP واقعی فقط سمت سرور دیده می‌شود.</b> مرورگر نمی‌داند IP عمومی کاربر چیست؛ پشت Reverse Proxy هم باید هدر <code>X-Forwarded-For</code> را سمت سرور درست تفسیر کرد.
+    </li>
+    <li>
+      <b>مصرف توکن فقط بعد از تماس با LLM معلوم می‌شود.</b> پاسخ هر درخواست به Gemini فیلد <code>usage</code> دارد (توکن ورودی/خروجی).
+      این تماس داخل <code>_llm_chat</code> در بک‌اند اتفاق می‌افتد؛ پس ثبت آن هم فقط همان‌جا ممکن است.
+    </li>
+    <li>
+      <b>منبع حقیقت (Source of Truth).</b> آمارِ ثبت‌شده در دیتابیس سرور، مبنای گزارش به مدیران شرکت خواهد بود؛ داده‌ای که کلاینت بفرستد قابل جعل است.
+    </li>
+  </ol>
+  <div class="box tip">
+    <b>نقش فرانت‌اند چیست؟</b>
+    فرانت‌اند فقط «مصرف‌کنندهٔ محترم API» است: پاسخ 429 را با پیام فارسی/انگلیسی و شمارش معکوس نشان می‌دهد و هیچ منطق امنیتی ندارد.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec4">
+  <h2 class="sec">۴. مشکل امنیتی فعلی که قبل از هر چیز باید حل شود</h2>
+  <div class="box danger">
+    <b>نشتی توکن در باندل مرورگر</b>
+    متغیر <code>VITE_MCP_AUTH_TOKEN</code> موقع Build داخل فایل JS نهایی تزریق می‌شود و عملاً برای همهٔ بازدیدکننده‌ها قابل خواندن است.
+    با این توکن هر کسی خارج از اپ شما می‌تواند بی‌نهایت درخواست بزند و سهمیهٔ LLM شرکت را مصرف/اتلاف کند.
+  </div>
+  <p><b>راه‌حل در معماری هدف:</b></p>
+  <ul>
+    <li>فرانت‌اند دیگر هیچ توکن قدرتمندی حمل نمی‌کند.</li>
+    <li>چون همه‌چیز روی یک دامنهٔ داخلی شرکت سرو می‌شود (فرانت + بک‌اند)، مرز اعتماد همان دامنه است؛ بک‌اند با Rate Limit بر اساس IP و Session از خودش محافظت می‌کند.</li>
+    <li>کلید Gemini فقط به‌صورت Environment Variable روی سرور می‌ماند و هرگز به سمت کلاینت نمی‌رود.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec5">
+  <h2 class="sec">۵. معماری هدف</h2>
+  <div class="diagram">
+┌────────────────────────────── سرور شرکت ──────────────────────────────┐
+│                                                                       │
+│   [مرورگر کاربران] ── HTTPS ──▶ [Nginx]                               │
+│                                   │  • TLS                            │
+│                                   │  • X-Forwarded-For                │
+│                                   │  • سرو فایل‌های فرانت (static)     │
+│                                   │  • مسیر /admin با محافظت          │
+│                                   ▼                                   │
+│                          [سرور MCP / FastAPI]                         │
+│                                   │                                   │
+│              ┌────────────────────┼────────────────────┐              │
+│              ▼                    ▼                    ▼              │
+│       [Middleware ها]        [/ask + tools]         [/admin/api/*]   │
+│        • RealIP              • Gemini call          • لاگین JWT      │
+│        • RateLimiter ◀──┐    • usage ثبت            • آمار و گزارش   │
+│        • RequestLogger  │    • tool calls           • Block/Unblock  │
+│              │          │                                           │
+│              ▼          └──────── [Redis: شمارنده + Session]          │
+│        [PostgreSQL: request_logs, config, admins]                     │
+│                                                                       │
+│   [اپ React ادمین] ── سرو روی /admin ── فقط بعد از لاگین بارگذاری     │
+└───────────────────────────────────────────────────────────────────────┘
+  </div>
+  <p>
+    نکتهٔ مهم: به جای ساخت یک سرویس Gateway جداگانه، middleware ها را داخل خود سرور MCP فعلی اضافه می‌کنیم —
+    چون سرور MCP از قبل Starlette است و افزودن middleware به آن طبیعی و کم‌هزینه است. اگر روزی ترافیک آن‌قدر بالا رفت که نیاز به جداسازی داشتید، همان middleware ها قابل انتقال به یک سرویس مستقل هستند.
+  </p>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec6">
+  <h2 class="sec">۶. جزئیات پیاده‌سازی در بک‌اند</h2>
+
+  <h3>۶.۱. چهار Middleware/هوک جدید (به ترتیب اجرا)</h3>
+  <table>
+    <tr><th>#</th><th>نام</th><th>وظیفه</th><th>جزئیات فنی</th></tr>
+    <tr>
+      <td>۱</td><td>RealIPMiddleware</td>
+      <td>استخراج IP واقعی کاربر</td>
+      <td>خواندن <code>X-Forwarded-For</code> (اولین IP) با fallback به <code>request.client.host</code>؛ فقط وقتی درخواست واقعاً از Nginx آمده به این هدر اعتماد شود.</td>
+    </tr>
+    <tr>
+      <td>۲</td><td>RateLimiterMiddleware</td>
+      <td>اجرای سهمیه‌ها قبل از پردازش</td>
+      <td>بررسی شمارنده‌ها در Redis (کلیدهای <code>rl:ip:{hash}</code> و <code>rl:sess:{id}</code>)؛ در صورت تخلف: پاسخ <code>429</code> + هدر <code>Retry-After</code>.</td>
+    </tr>
+    <tr>
+      <td>۳</td><td>RequestLoggerMiddleware</td>
+      <td>ثبت هر درخواست در PostgreSQL</td>
+      <td>زمان، IP هش‌شده، session_id، اندپوینت، status code، مدت پاسخ (latency). ثبت غیرمسدودکننده (async) تا سرعت پاسخ نیفتد.</td>
+    </tr>
+    <tr>
+      <td>۴</td><td>UsageTracker (هوک، نه middleware)</td>
+      <td>ثبت مصرف توکن</td>
+      <td>داخل <code>ask_endpoint</code> بعد از هر <code>_llm_chat</code>: خواندن <code>data["usage"]["prompt_tokens"]</code> و <code>data["usage"]["completion_tokens"]</code> و افزودن به رکورد لاگ همان درخواست.</td>
+    </tr>
+  </table>
+
+  <h3>۶.۲. نقاط اتصال دقیق در کد فعلی (<code>server.py</code>)</h3>
+  <pre><code># 1) داخل ask_endpoint (خط ~319) بعد از گرفتن پاسخ LLM:
+data = await _llm_chat(history, api_key, base_url, model)
+usage = data.get("usage", {})          # ← جدید: استخراج توکن‌ها
+log.usage_prompt   = usage.get("prompt_tokens", 0)
+log.usage_completion = usage.get("completion_tokens", 0)
+
+# 2) در create_http_app (خط ~449) لیست middleware های Starlette:
+starlette_app.add_middleware(RealIPMiddleware)
+starlette_app.add_middleware(RateLimiterMiddleware)
+starlette_app.add_middleware(RequestLoggerMiddleware)
+
+# 3) جایگزینی _web_sessions (خط ~202) با Redis:
+#    کلید: sess:{session_id}  |  ساختار: List of messages  |  TTL: مثلاً 24 ساعت</code></pre>
+
+  <h3>۶.۳. انتقال Session ها از حافظه به Redis</h3>
+  <ul>
+    <li>الان با ری‌استارت سرور، همهٔ مکالمات گم می‌شوند و اگر روزی چند worker/replica اجرا شود، هر worker session های خودش را دارد (تجربهٔ کاربری خراب).</li>
+    <li>با Redis: مکالمه بین ری‌استارت‌ها می‌ماند، بین worker ها مشترک است، با TTL خودکار پاک می‌شود، و همان کلید برای آمار «هر Session چند توکن خورده» استفاده می‌شود.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec7">
+  <h2 class="sec">۷. طرح دیتابیس (PostgreSQL)</h2>
+
+  <h3>۷.۱. جدول اصلی لاگ درخواست‌ها</h3>
+  <pre><code>CREATE TABLE request_logs (
+    id                 BIGSERIAL PRIMARY KEY,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    session_id         TEXT,
+    ip_hash            TEXT NOT NULL,        -- SHA-256(ip + salt)، نه IP خام
+    endpoint           TEXT NOT NULL,        -- '/ask' یا '/mcp'
+    tool_name          TEXT,                 -- search_notes / lookup_page / ...
+    model              TEXT,                 -- gemini-flash-latest ...
+    status_code        INT NOT NULL,
+    latency_ms         INT,
+    prompt_tokens      INT DEFAULT 0,
+    completion_tokens  INT DEFAULT 0,
+    total_tokens       INT DEFAULT 0,
+    error_flag         BOOLEAN DEFAULT false
+);
+CREATE INDEX idx_logs_time    ON request_logs (created_at DESC);
+CREATE INDEX idx_logs_ip      ON request_logs (ip_hash, created_at DESC);
+CREATE INDEX idx_logs_session ON request_logs (session_id, created_at DESC);</code></pre>
+
+  <div class="box tip">
+    <b>چرا IP هش می‌شود؟</b>
+    ذخیرهٔ IP خام یعنی نگهداری دادهٔ شخصی کارکنان شرکت. با هش + salt، همچنان می‌توانید «این IP همان قبلی است» را تشخیص دهید
+    (برای Block/Unblock و گزارش) ولی در صورت لو رفتن دیتابیس، آی‌پی واقعی افشا نمی‌شود. salt را در Environment Variable نگه دارید.
+  </div>
+
+  <h3>۷.۲. تنظیمات قابل تغییر از پنل (بدون دیپلوی مجدد)</h3>
+  <pre><code>CREATE TABLE limits_config (
+    key        TEXT PRIMARY KEY,     -- 'ip_hourly' , 'ip_daily' , 'session_per_min' ,
+                                     -- 'session_token_daily' , 'global_token_daily'
+    value      TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+INSERT INTO limits_config (key, value) VALUES
+    ('ip_hourly',           '30'),
+    ('ip_daily',            '200'),
+    ('session_per_min',     '10'),
+    ('session_token_daily', '150000'),
+    ('global_token_daily',  '5000000');</code></pre>
+
+  <h3>۷.۳. مدیریت IP های مسدود و کاربران ادمین</h3>
+  <pre><code>CREATE TABLE blocked_ips (
+    ip_hash    TEXT PRIMARY KEY,
+    reason     TEXT,
+    blocked_at TIMESTAMPTZ DEFAULT now(),
+    blocked_by TEXT                      -- نام کاربر ادمین
+);
+
+CREATE TABLE admin_users (
+    username       TEXT PRIMARY KEY,
+    password_hash  TEXT NOT NULL,       -- bcrypt
+    display_name   TEXT,
+    created_at     TIMESTAMPTZ DEFAULT now(),
+    last_login_at  TIMESTAMPTZ
+);</code></pre>
+
+  <h3>۷.۴. نمونه کوئری‌های پنل (گزارش‌ها از همین‌جا می‌آیند)</h3>
+  <pre><code>-- مصرف امروز به تفکیک IP
+SELECT ip_hash, COUNT(*) AS reqs, SUM(total_tokens) AS tokens
+FROM request_logs
+WHERE created_at >= date_trunc('day', now())
+GROUP BY ip_hash ORDER BY tokens DESC LIMIT 50;
+
+-- روند روزانهٔ ۳۰ روز اخیر (برای نمودار داشبورد)
+SELECT date_trunc('day', created_at) AS day,
+       COUNT(*) AS requests, SUM(total_tokens) AS tokens,
+       AVG(latency_ms)::int AS avg_latency
+FROM request_logs
+WHERE created_at >= now() - interval '30 days'
+GROUP BY 1 ORDER BY 1;</code></pre>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec8">
+  <h2 class="sec">۸. سیاست Rate Limiting</h2>
+
+  <h3>۸.۱. سهمیه‌های پیشنهادی (شروع کار — از پنل قابل تغییر)</h3>
+  <table>
+    <tr><th>محدودیت</th><th>مقدار</th><th>هدف</th></tr>
+    <tr><td>هر IP — در دقیقه</td><td>۱۰ درخواست</td><td>جلوگیری از اسپم لحظه‌ای</td></tr>
+    <tr><td>هر IP — در ساعت</td><td>۳۰ درخواست</td><td>مهار اسکرپینگ</td></tr>
+    <tr><td>هر IP — در روز</td><td>۲۰۰ درخواست</td><td>سهمیهٔ عادلانهٔ روزانه</td></tr>
+    <tr><td>هر Session — توکن در روز</td><td>۱۵۰٬۰۰۰ توکن</td><td>جلوگیری از سوختن بودجه توسط یک گفتگوی بی‌پایان</td></tr>
+    <tr><td>کل سرور — توکن در روز</td><td>۵٬۰۰۰٬۰۰۰ توکن</td><td>Hard Cap بودجهٔ LLM شرکت (در صورت پر شدن: پیام «سرویس امروز به سقف رسید»)</td></tr>
+  </table>
+  <p>
+    با ۱۰۰۰ کاربر در روز و میانگین ۵ سؤال از هر نفر، این سقف‌ها حدوداً یعنی ۵۰۰۰ سؤال در روز — با فرض میانگین ۲۰۰۰ توکن برای هر سؤال، حدود ۱۰ میلیون توکن در روز.
+    اعداد بالا را بعد از یک هفته مشاهدهٔ دادهٔ واقعی تنظیم کنید؛ به همین دلیل ستون تنظیمات در پنل ادمین از روز اول ضروری است.
+  </p>
+
+  <h3>۸.۲. الگوریتم</h3>
+  <ul>
+    <li><b>Fixed Window با Redis:</b> کلید <code>rl:ip:{hash}:{yyyymmddhh}</code> با <code>INCR</code> + <code>EXPIRE</code> — ساده، سریع، برای این مقیاس کاملاً کافی.</li>
+    <li>اگر بعداً دقت بالاتری خواستید: Sliding Window (دو شمارندهٔ همپوشان) یا Token Bucket — مفهومش را در مسیر یادگیری بخوانید.</li>
+  </ul>
+
+  <h3>۸.۳. قرارداد پاسخ به کاربر</h3>
+  <pre><code>HTTP/1.1 429 Too Many Requests
+Retry-After: 3600
+X-RateLimit-Limit: 30
+X-RateLimit-Remaining: 0
+
+{
+  "error": "rate_limited",
+  "message_fa": "تعداد درخواست‌های شما زیاد است. لطفاً بعداً تلاش کنید.",
+  "message_en": "Too many requests. Please try again later.",
+  "retry_after_seconds": 3600
+}</code></pre>
+  <p>فرانت‌اند این را می‌گیرد و یک پیام دو زبانه با شمارش معکوس نمایش می‌دهد (بدون شکستن UI).</p>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec9">
+  <h2 class="sec">۹. پنل ادمین</h2>
+
+  <h3>۹.۱. معماری</h3>
+  <ul>
+    <li><b>API ادمین:</b> مسیرهای <code>/admin/api/*</code> روی همان سرور MCP، با middleware احراز هویت JWT مستقل از API عمومی.</li>
+    <li><b>UI ادمین:</b> یک اپ React کوچک و جدا (build خروجی‌اش در مسیر <code>/admin</code> روی Nginx سرو می‌شود). از اپ دانشجویان کاملاً جداست.</li>
+    <li><b>لاگین:</b> صفحهٔ ورود با username/password؛ رمزها به‌صورت bcrypt در جدول <code>admin_users</code>؛ توکن JWT با عمر کوتاه (مثلاً ۳۰ دقیقه) در localStorage.</li>
+    <li><b>لایهٔ دوم حفاظت:</b> در Nginx می‌توان مسیر <code>/admin</code> را فقط به رنج IP داخلی شرکت محدود کرد (Allowlist) — دفاع در عمق.</li>
+    <li><b>آینده:</b> اگر شرکت SSO/LDAP دارد، اتصال لاگین ادمین به آن بهترین گزینه است (با تیم IT هماهنگ کنید).</li>
+  </ul>
+
+  <h3>۹.۲. صفحات پنل</h3>
+  <table>
+    <tr><th>صفحه</th><th>محتوا</th><th>کوئری پشت صحنه</th></tr>
+    <tr>
+      <td><b>داشبورد</b></td>
+      <td>کارت‌های امروز: تعداد درخواست، مجموع توکن، کاربر یکتا (IP/Session)، میانگین تأخیر، تعداد 429ها + نمودار روند ۳۰ روزه</td>
+      <td><code>GROUP BY date_trunc('day')</code></td>
+    </tr>
+    <tr>
+      <td><b>IP ها</b></td>
+      <td>جدول IPها (هش‌شده) با تعداد درخواست، توکن مصرفی، آخرین فعالیت + دکمهٔ Block / Unblock</td>
+      <td><code>GROUP BY ip_hash</code></td>
+    </tr>
+    <tr>
+      <td><b>Session ها</b></td>
+      <td>جدول گفتگوها با طول مکالمه و توکن مصرفی + مشاهدهٔ جزئیات هر گفتگو</td>
+      <td><code>GROUP BY session_id</code></td>
+    </tr>
+    <tr>
+      <td><b>لاگ زنده</b></td>
+      <td>آخرین ۲۰۰ درخواست با فیلتر: بازهٔ زمانی، IP، Session، status=429، فقط خطاها</td>
+      <td><code>SELECT ... ORDER BY created_at DESC</code></td>
+    </tr>
+    <tr>
+      <td><b>تنظیمات</b></td>
+      <td>ویرایش سقف‌های Rate Limit و بودجهٔ توکن (ذخیره در <code>limits_config</code>)</td>
+      <td><code>UPDATE limits_config</code></td>
+    </tr>
+  </table>
+
+  <h3>۹.۳. نمودارهای UI</h3>
+  <p>برای رسم نمودار در React از کتابخانهٔ <code>Recharts</code> استفاده می‌شود — سبک، declarative و سازگار با RTL. داده‌اش را از دو endpoint می‌گیرد: <code>/admin/api/stats/daily</code> و <code>/admin/api/stats/today</code>.</p>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec10">
+  <h2 class="sec">۱۰. زیرساخت استقرار روی سرور شرکت</h2>
+
+  <h3>۱۰.۱. چیدمان سرویس‌ها (Docker Compose)</h3>
+  <div class="diagram">
+docker-compose.yml
+├── nginx        : 443/80 ← TLS ، static files (فرانت + پنل ادمین)، proxy_pass
+├── mcp-server   : uvicorn (FastAPI) — تصویر فعلی Dockerfile با افزودن middleware ها
+├── postgres     : volume → pg_data
+├── redis        : volume → redis_data (یا بدون volume، چون فقط شمارنده است)
+└── backup       : cron شبانه → pg_dump + tar از lancedb → مسیر اشتراک شبکه‌ای شرکت
+  </div>
+
+  <h3>۱۰.۲. الزامات و نکات</h3>
+  <table>
+    <tr><th>موضوع</th><th>توصیه</th></tr>
+    <tr><td>سخت‌افزار</td><td>سرور با ۴ هسته CPU و ۸ گیگ RAM کافی است (مدل embedding سبک است ولی RAM برای sentence-transformers لازم است).</td></tr>
+    <tr><td>TLS</td><td>گواهی داخلی شرکت (از تیم IT بگیرید) یا Let's Encrypt اگر دامنهٔ عمومی دارید. HTTP همیشه به HTTPS ریدایرکت شود.</td></tr>
+    <tr><td>دامنه</td><td>مثلاً <code>fpga-assistant.company.local</code> — با DNS داخلی شرکت.</td></tr>
+    <tr><td>CORS</td><td>مقدارهای هاردکد فعلی (GitHub Pages و localhost) حذف و به دامنهٔ شرکت تغییر کند.</td></tr>
+    <tr><td>Secrets</td><td>کلید Gemini، salt هش IP، رمز دیتابیس — فقط در Environment Variable های Docker (فایل <code>.env</code> با دسترسی محدود روی سرور)، هرگز در کد.</td></tr>
+    <tr><td>لاگ سیستم</td><td><code>Docker logging driver</code> با چرخش (max-size) تا دیسک پر نشود.</td></tr>
+    <tr><td>Healthcheck</td><td>اندپوینت <code>/health</code> موجود است؛ به Docker healthcheck و مانیتور Uptime Kuma وصل شود.</td></tr>
+    <tr><td>بکاپ</td><td>شبانه: <code>pg_dump</code> + آرشیو <code>data/lancedb</code> و پوشهٔ notes → نگهداری ۱۴ نسخه.</td></tr>
+    <tr><td>به‌روزرسانی</td><td>استقرار با <code>docker compose up -d --build</code>؛ چون گیت عمومی ندارید، یک مخزن خصوصی داخلی (Gitea) یا حتی پوشهٔ نسخه‌بندی‌شده کافی است.</td></tr>
+  </table>
+
+  <div class="box warn">
+    <b>هماهنگی با تیم IT شرکت</b>
+    قبل از خرید/راه‌اندازی هر چیزی، سه سؤال از تیم IT بپرسید:
+    آیا سرور لینوکسی آماده و دسترسی SSH دارید؟ آیا PostgreSQL/Redis مرکزی موجود است یا باید داخل Docker خودتان بیاورید؟
+    و برای دامنه/گواهی TLS داخلی چه فرایندی دارند؟ پاسخ این سه سؤال بخش بزرگی از طراحی استقرار را مشخص می‌کند.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec11">
+  <h2 class="sec">۱۱. نقشه راه اجرا (فازبندی)</h2>
+  <table>
+    <tr><th>فاز</th><th>عنوان</th><th>کارها</th><th>تحویل‌دادنی</th><th>تخمین</th></tr>
+    <tr>
+      <td><b>۰</b></td>
+      <td>امنیت پایه</td>
+      <td>حذف توکن از باندل مرورگر؛ اصلاح CORS؛ انتقال session ها به Redis</td>
+      <td>سروری که نشتی کلید ندارد</td>
+      <td>۱–۲ روز</td>
+    </tr>
+    <tr>
+      <td><b>۱</b></td>
+      <td>ثبت داده</td>
+      <td>PostgreSQL + RealIP + RequestLogger + جدول request_logs؛ اتصال UsageTracker به پاسخ LLM</td>
+      <td>دادهٔ خام درخواست‌ها و توکن‌ها جمع می‌شود</td>
+      <td>۲–۳ روز</td>
+    </tr>
+    <tr>
+      <td><b>۲</b></td>
+      <td>محدودسازی</td>
+      <td>Redis + RateLimiter + پاسخ 429 استاندارد + مدیریت آن در فرانت‌اند</td>
+      <td>کنترل کامل مصرف</td>
+      <td>۲ روز</td>
+    </tr>
+    <tr>
+      <td><b>۳</b></td>
+      <td>API ادمین</td>
+      <td><code>/admin/api/*</code> + جدول admin_users + لاگین JWT</td>
+      <td>دسترسی برنامه‌ای به آمار</td>
+      <td>۲ روز</td>
+    </tr>
+    <tr>
+      <td><b>۴</b></td>
+      <td>UI پنل ادمین</td>
+      <td>اپ React جدا: داشبورد، IPs، Sessions، لاگ زنده، تنظیمات</td>
+      <td>پنل کامل و قابل استفاده</td>
+      <td>۳–۴ روز</td>
+    </tr>
+    <tr>
+      <td><b>۵</b></td>
+      <td>استقرار شرکتی</td>
+      <td>Docker Compose + Nginx + TLS + بکاپ شبانه + healthcheck + هماهنگی IT</td>
+      <td>سرویس تولیدی روی سرور شرکت</td>
+      <td>۲–۳ روز</td>
+    </tr>
+    <tr>
+      <td><b>۶</b></td>
+      <td>پایش و تنظیم</td>
+      <td>یک هفته مشاهدهٔ دادهٔ واقعی؛ تنظیم سقف‌ها؛ اختیاری: Grafana/Uptime Kuma</td>
+      <td>اعداد نهایی و پایدار</td>
+      <td>پیوسته</td>
+    </tr>
+  </table>
+  <p><b>ترتیب اهمیت:</b> فاز ۰ و ۱ را حتماً قبل از عرضه به شرکت تمام کنید؛ فاز ۲ را می‌توانید همزمان با ۱ پیش ببرید. فازهای ۳ تا ۵ بعد از دیدن اولین دادهٔ واقعی معنادارتر می‌شوند.</p>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec12">
+  <h2 class="sec">۱۲. مسیر یادگیری — چه چیزهایی را از همین حالا شروع کنم؟</h2>
+  <p>
+    فهرست زیر بر اساس «چه چیزی کدام فاز را باز می‌کند» اولویت‌بندی شده است. برای هر مورد گفته‌ام دقیقاً کدام زیرمجموعهٔ موضوع را یاد بگیرید
+    تا وقت‌تان روی چیزهایی نرود که به این پروژه ربطی ندارد.
+  </p>
+
+  <h3>اولویت الف — همین هفته شروع کنید (پیش‌نیاز فازهای ۰ تا ۲)</h3>
+  <table>
+    <tr><th>موضوع</th><th>دقیقاً چه چیزی یاد بگیرید</th><th>منبع پیشنهادی</th><th>زمان</th></tr>
+    <tr>
+      <td><b>Docker + Docker Compose</b> <span class="pill p-high">فوری</span></td>
+      <td>مفاهیم image/container/volume/network؛ نوشتن یک <code>compose.yml</code> برای app+postgres+redis؛ دیدن لاگ‌ها با <code>logs -f</code> و ورود با <code>exec -it</code></td>
+      <td>docs.docker.com (بخش Get Started و Compose)</td>
+      <td>۴–۶ روز</td>
+    </tr>
+    <tr>
+      <td><b>PostgreSQL</b> <span class="pill p-high">فوری</span></td>
+      <td><code>SELECT/GROUP BY/JOIN</code>، ایندکس گذاشتن، <code>TIMESTAMPTZ</code>، اتصال از پایتون با <code>asyncpg</code> یا <code>psycopg</code>، تهیهٔ dump با <code>pg_dump</code></td>
+      <td>postgresql.org/docs (tutorial) + تمرین با DBeaver/pgAdmin</td>
+      <td>۴–۶ روز</td>
+    </tr>
+    <tr>
+      <td><b>Middleware در Starlette/FastAPI</b> <span class="pill p-high">فوری</span></td>
+      <td>نوشتن یک middleware سفارشی ASGI (امضای <code>__call__(scope, receive, send)</code>)، ترتیب اجرای middleware ها، پاسخ دادن مستقیم از middleware (همان کاری که BearerAuthMiddleware فعلی شما می‌کند — الگوی خوبی برای تقلید است)</td>
+      <td>starlette.dev/middleware + خواندن همین کد فعلی server.py خط 476</td>
+      <td>۱–۲ روز</td>
+    </tr>
+    <tr>
+      <td><b>Nginx به‌عنوان Reverse Proxy</b> <span class="pill p-med">مهم</span></td>
+      <td><code>proxy_pass</code>، هدرهای <code>X-Forwarded-For/X-Real-IP</code>، سرو فایل static، تنظیم TLS، محدودکردن مسیر با <code>allow/deny</code></td>
+      <td>nginx.org/en/docs + مثال‌های «nginx reverse proxy fastapi»</td>
+      <td>۲–۳ روز</td>
+    </tr>
+  </table>
+
+  <h3>اولویت ب — قبل از استقرار نهایی</h3>
+  <table>
+    <tr><th>موضوع</th><th>دقیقاً چه چیزی یاد بگیرید</th><th>منبع پیشنهادی</th><th>زمان</th></tr>
+    <tr>
+      <td><b>Redis</b> <span class="pill p-med">مهم</span></td>
+      <td>فقط این الگوها: <code>INCR</code>، <code>EXPIRE</code>، <code>TTL</code>، ذخیرهٔ List برای history گفتگو؛ کتابخانهٔ <code>redis-py</code> در حالت async</td>
+      <td>redis.io/docs (بخش data types)</td>
+      <td>۲–۳ روز</td>
+    </tr>
+    <tr>
+      <td><b>الگوریتم‌های Rate Limiting</b> <span class="pill p-med">مهم</span></td>
+      <td>تفاوت Fixed Window / Sliding Window / Token Bucket؛ اینکه چرا Fixed Window در مرزش پنجره جهش دارد؛ مطالعهٔ هدرهای استاندارد <code>Retry-After</code></td>
+      <td>جستجو: "rate limiting algorithms stripe blog" و "Kong rate limiting"</td>
+      <td>۱ روز مطالعه</td>
+    </tr>
+    <tr>
+      <td><b>احراز هویت: JWT + bcrypt</b> <span class="pill p-med">مهم</span></td>
+      <td>ساخت/اعتبارسنجی JWT در پایتون (<code>pyjwt</code>)؛ هش رمز با <code>bcrypt</code>؛ چرا رمز خام یا MD5 هرگز؛ انقضای توکن و refresh</td>
+      <td>fastapi.tiangolo.com/tutorial/security</td>
+      <td>۲ روز</td>
+    </tr>
+    <tr>
+      <td><b>ادمین لینوکس پایه</b> <span class="pill p-med">مهم</span></td>
+      <td>SSH با کلید، <code>systemctl</code>، firewall با <code>ufw</code>، <code>cron</code>، خواندن لاگ با journalctl، بررسی فضای دیسک و RAM</td>
+      <td>هر دورهٔ "Linux server administration basics"</td>
+      <td>۴–۵ روز</td>
+    </tr>
+  </table>
+
+  <h3>اولویت ج — بعد از راه‌اندازی (اختیاری/تکمیلی)</h3>
+  <table>
+    <tr><th>موضوع</th><th>دقیقاً چه چیزی یاد بگیرید</th><th>زمان</th></tr>
+    <tr><td><b>Recharts</b></td><td>رسم LineChart/BarChart در React برای داشبورد ادمین</td><td>۱ روز</td></tr>
+    <tr><td><b>Prometheus + Grafana</b></td><td>متریك سیستم (CPU/RAM/latency) — فقط وقتی خواستید داشبورد عملیاتی داشته باشید؛ برای شروع Uptime Kuma ساده‌تر است</td><td>۲–۳ روز</td></tr>
+    <tr><td><b>مفاهیم حریم خصوصی داده</b></td><td>چرا IP دادهٔ شخصی است؛ الگوی hash+salt؛ سیاست نگهداری محدود (Retention) مثلاً حذف لاگ‌های قدیمی‌تر از ۹۰ روز</td><td>نیم روز مطالعه</td></tr>
+    <tr><td><b>SQL پیشرفته‌تر</b></td><td><code>date_trunc</code>, <code>interval</code>, window functions برای گزارش‌های هفتگی</td><td>پیوسته</td></tr>
+  </table>
+
+  <div class="box tip">
+    <b>روش پیشنهادی یادگیری (Project-Based):</b>
+    به جای دوره‌های طولانی، همین حالا روی سیستم خودتان یک sandbox بسازید:
+    یک پوشه با <code>compose.yml</code> شامل FastAPI کوچک + PostgreSQL + Redis، بنویسید؛ یک middleware ساده به آن اضافه کنید که هر request را در دیتابیس بنویسد؛
+    یک endpoint آمار بسازد. همین یک تمرین کوچک، ۷۰٪ مهارت‌های فازهای ۰ تا ۳ این طرح را پوشش می‌دهد.
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section class="card" id="sec13">
+  <h2 class="sec">۱۳. تصمیمات باز (برای شروع اجرا باید روشن شوند)</h2>
+  <ol>
+    <li><b>سرور شرکت:</b> آیا سرور لینوکسی آماده دارید یا باید درخواست کنید؟ چه توزیعی (Ubuntu/RHEL)؟</li>
+    <li><b>PostgreSQL و Redis مرکزی:</b> تیم IT سرویس آماده می‌دهد یا داخل Docker Compose خودمان بالا می‌آوریم؟ (پیش‌فرض سند: داخل Compose خودمان.)</li>
+    <li><b>دامنه و TLS:</b> نام دامنهٔ داخلی چیست و گواهی را تیم IT می‌دهد یا Let's Encrypt؟</li>
+    <li><b>SSO/LDAP:</b> آیا شرکت سامانهٔ ورود یکپارچه دارد که پنل ادمین به وصل شود؟</li>
+    <li><b>سقف بودجهٔ LLM:</b> مقدار واقعی «توکن در روز» که شرکت حاضر است پرداخت کند چیست؟ (عدد پیشنهادی سند موقتی است.)</li>
+    <li><b>Retention لاگ:</b> چند ماه لاگ نگه داریم؟ (پیشنهاد: جزئیات ۹۰ روز، گزارش تجمیعی روزانه برای همیشه.)</li>
+  </ol>
+</section>
+
+<footer>
+  سند برنامه‌ریزی پنل ادمین و Rate Limiting — دستیار درس FPGA/VHDL · نسخه ۱.۰ · تهیه‌شده بر اساس بازبینی کد فرانت‌اند و سرور MCP
+</footer>
+
+</div>
+</body>
+</html>
