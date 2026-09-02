@@ -13,22 +13,23 @@ export function ChatInput({ chatMessages, setChatMessages }) {
   const [isOffline, setIsOffline] = useState(false);
   const [offlineNoticeShown, setOfflineNoticeShown] = useState(false);
 
-  // Initialize MCP client on mount
+  // Initialize: just verify backend /ask works
   useEffect(() => {
-    const initMCP = async () => {
+    const initBackend = async () => {
       try {
         const client = getMCPClient();
-        await client.initialize();
+        // Light check - backend /ask with empty question to verify connectivity
+        await client.ask('ping', 'health-check');
         setMcpReady(true);
         setIsOffline(false);
-        console.log('MCP client initialized');
+        console.log('Backend connection verified');
       } catch (error) {
-        console.error('MCP initialization failed:', error);
-        setMcpError(`Failed to connect to MCP server: ${error.message}`);
+        console.error('Backend connection failed:', error);
+        setMcpError(`Failed to connect to backend: ${error.message}`);
         setIsOffline(true);
       }
     };
-    initMCP();
+    initBackend();
   }, []);
 
   function handleKeyDown(event) {
