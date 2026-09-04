@@ -4,6 +4,8 @@
   gap: 6px;
   margin-bottom: 8px;
   flex-shrink: 0;
+  direction: rtl;
+  text-align: right;
 }
 
 input {
@@ -36,20 +38,8 @@ button {
   background-color: grey;
 }
 
-.offline-notice {
-  background-color: #b8860b;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-left: 8px;
-  align-self: center;
-  white-space: nowrap;
-}
-
 /* Phone */
 @media (orientation: portrait) and (max-width: 768px) {
-
   .app-container {
     width: 100%;
     max-width: none;

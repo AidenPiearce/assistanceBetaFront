@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getMCPClient } from '../mcp-client.js';
-import { Chatbot } from '../chatbot-offline.js';
 import '../App.css';
 import loadingSpinner from '../assets/loading-spinner.gif';
 import './ChatInput.css';
@@ -10,26 +9,21 @@ export function ChatInput({ chatMessages, setChatMessages }) {
   const [inputText, setInputText] = useState('');
   const [mcpReady, setMcpReady] = useState(false);
   const [mcpError, setMcpError] = useState(null);
-  const [isOffline, setIsOffline] = useState(false);
-  const [offlineNoticeShown, setOfflineNoticeShown] = useState(false);
 
-  // Initialize: just verify backend /ask works
+  // Initialize MCP client on mount
   useEffect(() => {
-    const initBackend = async () => {
+    const initMCP = async () => {
       try {
         const client = getMCPClient();
-        // Light check - backend /ask with empty question to verify connectivity
-        await client.ask('ping', 'health-check');
+        await client.initialize();
         setMcpReady(true);
-        setIsOffline(false);
-        console.log('Backend connection verified');
+        console.log('MCP client initialized');
       } catch (error) {
-        console.error('Backend connection failed:', error);
-        setMcpError(`Failed to connect to backend: ${error.message}`);
-        setIsOffline(true);
+        console.error('MCP initialization failed:', error);
+        setMcpError(`Failed to connect to MCP server: ${error.message}`);
       }
     };
-    initBackend();
+    initMCP();
   }, []);
 
   function handleKeyDown(event) {
@@ -45,7 +39,7 @@ export function ChatInput({ chatMessages, setChatMessages }) {
   }
 
   async function sendMessage() {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !mcpReady) return;
 
     const userMessage = inputText.trim();
 
@@ -65,45 +59,13 @@ export function ChatInput({ chatMessages, setChatMessages }) {
     setChatMessages([
       ...newChatMessages,
       {
-        message: <img src={loadingSpinner} width="35px" alt="Loading..." />,
+        message: <img src={loadingSpinner} width="35px" alt="بارگداری..." />,
         sender: 'robot',
         id: crypto.randomUUID(),
       }
     ]);
 
     try {
-      // If we're in offline mode, use the offline chatbot
-      if (isOffline) {
-        // Show offline notice once
-        if (!offlineNoticeShown) {
-          setOfflineNoticeShown(true);
-          setChatMessages([
-            ...newChatMessages,
-            {
-              message: "Note: Using offline mode. Responses may be limited.",
-              sender: 'robot',
-              id: crypto.randomUUID(),
-              time: dayjs().format('h:mm a'),
-            }
-          ]);
-        }
-
-        // Get response from offline chatbot
-        const responseText = await Chatbot.getResponseAsync(userMessage);
-
-        setChatMessages([
-          ...newChatMessages,
-          {
-            message: responseText,
-            sender: 'robot',
-            id: crypto.randomUUID(),
-            time: dayjs().format('h:mm a'),
-          }
-        ]);
-        return;
-      }
-
-      // Otherwise, use MCP (online mode)
       const client = getMCPClient();
 
       // Persistent session so follow-up questions keep context
@@ -126,31 +88,13 @@ export function ChatInput({ chatMessages, setChatMessages }) {
         }
       ]);
     } catch (error) {
-      // If we were trying to use MCP and it failed, fallback to offline
+      // Never show raw LLM errors to users
       console.error('MCP ask error:', error);
-
-      // Switch to offline mode if not already
-      if (!isOffline) {
-        setIsOffline(true);
-        setOfflineNoticeShown(true);
-        setChatMessages([
-          ...newChatMessages,
-          {
-            message: "MCP server appears to be offline. Switching to offline mode.",
-            sender: 'robot',
-            id: crypto.randomUUID(),
-            time: dayjs().format('h:mm a'),
-          }
-        ]);
-      }
-
-      // Get response from offline chatbot
-      const responseText = await Chatbot.getResponseAsync(userMessage);
-
       setChatMessages([
         ...newChatMessages,
         {
-          message: responseText,
+          message:
+            "Sorry, something went wrong. Please try again in a moment.\nمتاسفم، مشکلی پیش آمد. لطفاً چند لحظه بعد دوباره تلاش کن.",
           sender: 'robot',
           id: crypto.randomUUID(),
           time: dayjs().format('h:mm a'),
@@ -159,34 +103,34 @@ export function ChatInput({ chatMessages, setChatMessages }) {
     }
   }
 
-  function clearChat() {
-    setChatMessages([]);
-  }
 
-  const canSend = mcpReady || isOffline;
+  // Show connection status
+  if (mcpError) {
+    return (
+      <div className="chat-input-container">
+        <div className="mcp-error">
+          Connection error: {mcpError}
+          <br />
+          <small>Check that the server is running.</small>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-input-container">
-      {isOffline && (
-        <span className="offline-notice">Offline mode</span>
-      )}
       <input
-        placeholder={canSend ? (isOffline ? "Offline mode - Ask me anything..." : "Ask about FPGA/VHDL...") : "Connecting to MCP server..."}
+        placeholder={mcpReady ? "سوال بپرسید ..." : "  ...درحال اتصال به سرور  "}
         size="30"
         onChange={(e) => saveInputText(e)}
         onKeyDown={(e) => handleKeyDown(e)}
         value={inputText}
-        disabled={!canSend}
+        disabled={!mcpReady}
       />
       <button
         onClick={sendMessage}
-        disabled={!canSend || !inputText.trim()}
+        disabled={!mcpReady || !inputText.trim()}
       >Send</button>
-      <button
-        onClick={clearChat}
-        className="clearButton"
-      >Clear History</button>
-      {!canSend && <span className="connecting">Connecting to MCP server...</span>}
     </div>
   );
 }

@@ -19,8 +19,7 @@ export function ChatMessage({ message, sender, time }) {
       )}
 
       <div className="chat-messages-text" dir="auto">
-
-        {sender !== 'user' ? (
+        {typeof message === 'string' && sender !== 'user' ? (
           <div className="markdown-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {message}
