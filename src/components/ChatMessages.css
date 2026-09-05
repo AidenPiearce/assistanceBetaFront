@@ -34,7 +34,6 @@ body {
   padding: 5px 0;
   direction: rtl;
   position: relative;
-  overflow: hidden;
 }
 
 /* NOTE: container is RTL, so flex-start = right side, flex-end = left side.

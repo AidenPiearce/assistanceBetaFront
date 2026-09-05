@@ -131,7 +131,7 @@ export function ChatInput({ chatMessages, setChatMessages }) {
       <button
         onClick={sendMessage}
         disabled={!mcpReady || !inputText.trim()}
-      >Send</button>
+      >ارسال</button>
     </div>
   );
 }
