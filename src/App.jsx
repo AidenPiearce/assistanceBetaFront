@@ -9,8 +9,8 @@ function loadSavedMessages() {
     const parsed = JSON.parse(localStorage.getItem('chatMessages')) || [];
     return Array.isArray(parsed)
       ? parsed.filter(
-          (m) => m && typeof m.message === 'string' && m.id
-        )
+        (m) => m && typeof m.message === 'string' && m.id
+      )
       : [];
   } catch {
     return [];
@@ -31,6 +31,7 @@ function App() {
 
   return (
     <div className="app-container">
+      <div className="backgroundImage" />
       <ChatMessages
         chatMessages={chatMessages}
       />

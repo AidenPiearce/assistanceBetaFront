@@ -14,17 +14,6 @@ body {
   margin-bottom: 5px;
 }
 
-.backgroundImage {
-  position: absolute;
-  inset: 0;
-  background-image: url("../assets/background.jpg");
-  background-repeat: repeat;
-  background-size: 250px;
-  background-position: top left;
-  pointer-events: none;
-  z-index: -1;
-}
-
 .chat-container::-webkit-scrollbar {
   display: none;
 }
