@@ -2,7 +2,6 @@ body {
   background-color: white;
 }
 
-
 .app-container {
   width: 100%;
   max-width: 600px;
@@ -14,13 +13,19 @@ body {
   overflow: hidden;
 }
 
-
+.backgroundImage {
+  position: absolute;
+  inset: 0;
+  background-image: url(...);
+  background-repeat: repeat;
+  background-size: 150px 150px;
+  background-position: top left;
+  pointer-events: none;
+}
 
 .chat-container::-webkit-scrollbar {
   display: none;
 }
-
-
 
 .welcome-message {
   color: grey;
@@ -80,10 +85,8 @@ body {
   margin-inline-start: 5px;
 }
 
-
 /* Phone */
 @media (orientation: portrait) and (max-width: 768px) {
-
   .app-container {
     width: 100%;
     max-width: none;
@@ -130,6 +133,5 @@ body {
 
   .welcome-message {
     font-size: 16px;
-
   }
 }

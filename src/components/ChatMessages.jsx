@@ -23,6 +23,7 @@ export function ChatMessages({ chatMessages }) {
     <div className="chat-container"
       ref={chatMessagesRef}
     >
+      <div className="backgroundImage" />
       {
         chatMessages.map((chatMessage) => {
           return (
