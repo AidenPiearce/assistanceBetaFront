@@ -26,6 +26,7 @@ input {
   flex-grow: 1;
   min-width: 0;
   outline: none;
+  background-color: white;
 }
 
 input:focus {
