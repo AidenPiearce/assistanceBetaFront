@@ -1,11 +1,19 @@
+@import "tailwindcss";
+
 .chat-input-container {
   display: flex;
   width: 100%;
   gap: 6px;
+  margin-top: 20px;
   margin-bottom: 8px;
   flex-shrink: 0;
-  direction: rtl;
-  text-align: right;
+}
+
+.mcp-error {
+  width: 200%;
+  margin-left: -50%;
+  margin-right: -50%;
+  text-align: center;
 }
 
 input {

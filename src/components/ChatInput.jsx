@@ -109,7 +109,7 @@ export function ChatInput({ chatMessages, setChatMessages }) {
   if (mcpError) {
     return (
       <div className="chat-input-container">
-        <div className="mcp-error">
+        <div className="mcp-error text-center ">
           Connection error: {mcpError}
           <br />
           <small>Check that the server is running.</small>
