@@ -21,6 +21,7 @@ body {
   background-size: 150px 150px;
   background-position: top left;
   pointer-events: none;
+  z-index: 0;
 }
 
 .chat-container::-webkit-scrollbar {
