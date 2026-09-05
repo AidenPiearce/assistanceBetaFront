@@ -21,7 +21,7 @@ export function ChatInput({ chatMessages, setChatMessages }) {
         console.log('Backend connection verified');
       } catch (error) {
         console.error('Backend connection failed:', error);
-        setMcpError(`Failed to connect to backend: ${error.message}`);
+        setMcpError(`خطا دراتصال به سرور: ${error.message}`);
       }
     };
     initBackend();
@@ -110,9 +110,9 @@ export function ChatInput({ chatMessages, setChatMessages }) {
     return (
       <div className="chat-input-container">
         <div className="mcp-error text-center ">
-          Connection error: {mcpError}
+          مشکل در اتصال: {mcpError}
           <br />
-          <small>Check that the server is running.</small>
+          <small> صفحه را رفرش کنید </small>
         </div>
       </div>
     );
